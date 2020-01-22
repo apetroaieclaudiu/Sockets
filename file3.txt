@@ -1,0 +1,119 @@
+
+select(), FD_SET(), FD_CLR(), FD_ISSET(), FD_ZERO()
+indicate ready file descriptor 
+
+Function
+
+SYNOPSIS
+#include <sys/time.h>
+
+#include <sys/types.h>
+
+#include <sys/select.h>
+
+int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+
+FD_SET(int fd, fd_set *fdset);
+
+FD_CLR(int fd, fd_set *fdset);
+
+FD_ISSET(int fd, fd_set *fdset);
+
+FD_ZERO(fd_set *fdset);
+
+DESCRIPTION
+The select() function indicates which of the specified file descriptors is ready for reading, ready for writing, or has an error condition pending. If the specified condition is false for all of the specified file descriptors, select() blocks, up to the specified timeout interval, until the specified condition is true for at least one of the specified file descriptors or until a signal arrives that needs to be delivered.
+
+The select() function supports regular file descriptors, console descriptors, pipe descriptors, FIFO descriptors, socket descriptors, and communication port descriptors. A select() on file descriptors that refer to other types of file fails with errno set to EBADF.
+
+The nfds argument specifies the range of file descriptors to be tested. The select() function tests file descriptors in the range of 0 to nfds-1.
+
+If the readfds argument is not NULL, it points to an object of type fd_set that on input specifies the file descriptors to be checked for being ready to read, and on output indicates which file descriptors are ready to read.
+
+If the writefds argument is not NULL, it points to an object of type fd_set that on input specifies the file descriptors to be checked for being ready to write, and on output indicates which file descriptors are ready to write.
+
+If the exceptfds argument is not NULL, it points to an object of type fd_set that on input specifies the file descriptors to be checked for error conditions pending, and on output indicates which file descriptors have error conditions pending.
+
+On successful completion, the objects pointed to by the readfds, writefds, and exceptfds arguments are modified to indicate which file descriptors are ready for reading, ready for writing, or have an error condition pending, respectively. For each file descriptor less than nfds, the corresponding bit is set on successful completion if it was set on input and the associated condition is true for that file descriptor.
+
+If the timeout argument is not a NULL pointer, it points to an object of type struct timeval that specifies a maximum interval to wait for the selection to complete. If the timeout argument points to an object of type struct timeval whose members are 0, select() does not block. If the timeout argument is a NULL pointer, select() blocks until an event causes one of the masks to be returned with a valid (non-zero) value or until a signal occurs that needs to be delivered. If the time limit expires before any event occurs that would cause one of the masks to be set to a non-zero value, select() completes successfully and returns 0.
+
+The use of a timeout does not affect any pending timers set by alarm() or setitimer().
+
+If the readfds, writefds, and exceptfds arguments are all NULL pointers and the timeout argument is not NULL, select() blocks for the time specified, or until interrupted by a signal. If the readfds, writefds, and exceptfds arguments are all NULL pointers and the timeout argument is NULL, select() blocks until interrupted by a signal.
+
+File descriptors associated with regular files always select true for ready to read, ready to write, and error conditions.
+
+On failure, the objects pointed to by the readfds, writefds, and exceptfds arguments are not modified. If the timeout interval expires without the specified condition being true for any of the specified file descriptors, the objects pointed to by the readfds, writefds, and exceptfds arguments have all bits set to 0.
+
+If a process is blocked on a select() while waiting for input from a socket and the sending process closes the socket, the select() notes this as an exception rather than as data. Therefore, if the select() is not currently looking for exceptions, it waits indefinitely.
+
+File descriptor masks of type fd_set can be initialized and tested with FD_CLR(), FD_ISSET(), FD_SET(), and FD_ZERO() macros.
+
+FD_CLR(fd, &fdset)  
+Clears the bit for the file descriptor fd in the file descriptor set fdset.
+
+FD_ISSET(fd, &fdset)  
+Returns a non-zero value if the bit for the file descriptor fd is set in the file descriptor set pointed to by fdset, and 0 otherwise.
+
+FD_SET(fd, &fdset)  
+Sets the bit for the file descriptor fd in the file descriptor set fdset.
+
+FD_ZERO(&fdset)  
+Initializes the file descriptor set fdset to have zero bits for all file descriptors.
+
+Unexpected errors may occur if fd is less than 0 or greater than or equal to FD_SETSIZE in any of these macros.
+
+Note:
+The default value of FD_SETSIZE (currently 256) is smaller than the default limit on the number of open files. To accommodate programs that may use a larger number of open files with select(), it is possible to increase this size within a program by providing a larger definition of FD_SETSIZE before the inclusion of <sys/select.h>.
+
+PARAMETERS
+nfds 
+Specifies how many descriptors should be examined. The descriptors checked are 0 through nfds-1.
+
+readfds 
+Points to a bit mask that specifies the file descriptors to check for reading.
+
+writefds 
+Points to a bit mask that specifies the file descriptors to check for writing.
+
+exceptfds  
+Points to a bit mask that specifies the file descriptors to check for exception conditions.
+
+timeout 
+When non-NULL, contains the address of a struct timeval that specifies how long to wait for the required condition before returning to the caller. When NULL, forces the call to block until a descriptor becomes ready or until a signal occurs.
+
+RETURN VALUES
+If successful, select() returns the number of ready descriptors that are contained in the bit masks. If the time limit expires, select returns zero and sets errno to EINTR. On failure, it returns -1 and sets errno to one of the following values:
+
+EBADF 
+One or more of the file descriptor sets specified a file descriptor that is not a valid open file descriptor or specified a file descriptor that does not support selection.
+
+EINTR 
+A signal interrupted the call or the time limit expired.
+
+EISDIR 
+One or more the file descriptor sets specified a file descriptor that refers to an open directory.
+
+EINVAL 
+A component of timeout is outside the acceptable range.
+
+CONFORMANCE
+UNIX98.
+
+MULTITHREAD SAFETY LEVEL
+MT-Safe.
+
+PORTING ISSUES
+Windows 95 does not correctly return ECONNREFUSED for non-blocking socket connections; the connection attempt blocks indefinitely. Therefore, on Windows 95, you should always use a timeout in your calls to select() that are waiting for connections on non-blocking sockets. This does not apply to Windows 98 or 7/2008R2/8/2012/10/2016/2019.
+
+AVAILABILITY
+PTC MKS Toolkit for Professional Developers
+PTC MKS Toolkit for Professional Developers 64-Bit Edition
+PTC MKS Toolkit for Enterprise Developers
+PTC MKS Toolkit for Enterprise Developers 64-Bit Edition
+SEE ALSO
+Functions:
+fcntl(), poll(), read(), write()
+PTC MKS Toolkit 10.2 Documentation Build 28.
+
