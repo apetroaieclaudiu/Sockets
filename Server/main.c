@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include "LinkedList.h"
 
 #define MAX_BUFFER_SIZE 1024
 #define TRUE   1
