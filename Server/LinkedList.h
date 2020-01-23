@@ -11,7 +11,7 @@ extern Node *head;
 extern pthread_mutex_t lock_head;
 extern pthread_mutex_t lock_next;
 //This function will add a new node at the end of the list with the value equal to "value"
-void add_node(char file_req[], int desc_id);
+Node* add_node(char file_req[], int desc_id);
 
 //This function will delete the node with the specified value
 void delete_node(int value);
@@ -21,3 +21,5 @@ void print_list();
 
 //A function that will erase all nodes from the list
 void flush_list();
+
+Node* getNode(int desc_id);

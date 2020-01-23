@@ -73,9 +73,10 @@ int main(int argc , char *argv[])
 	addrlen = sizeof(address);
 	puts("Waiting for connections ...");
 
+		FD_ZERO(&readfds);
 	while(TRUE)
 	{
-		FD_ZERO(&readfds);
+	
 
 		FD_SET(master_socket, &readfds);
 		max_sd = master_socket;
@@ -129,70 +130,94 @@ int main(int argc , char *argv[])
 
 			if (FD_ISSET( sd , &readfds))
 			{
-				if ((valread = read( sd , buffer, 1024)) == 0)
-				{
-					getpeername(sd , (struct sockaddr*)&address , \
-							(socklen_t*)&addrlen);
-					printf("Host disconnected , ip %s , port %d \n" ,
-							inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+				Node* temp;
+				temp = getNode(sd);
+				if (temp == NULL) {
+					if ((valread = read( sd , buffer, 1024)) == 0)
+					{
+						getpeername(sd , (struct sockaddr*)&address , \
+								(socklen_t*)&addrlen);
+						printf("Host disconnected , ip %s , port %d \n" ,
+								inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+						close( sd );
+						delete_node(sd);
+						client_socket[i] = 0;
+					} else {
 
-					close( sd );
-					client_socket[i] = 0;
+						buffer[valread] = '\0';
+						temp = add_node(buffer, sd);
+					}
+				}
+				if (temp == NULL)
+					break;
+				printf("Working with %s file\n\n" , temp->file_requested);	
+				int fp = open(temp->file_requested, O_RDONLY);
+				int len;
+				size_t newLen;
+				char length[10];
+				int old_offset;
+
+				if (fp==-1) {
+					fputs ("File error",stderr); 
+					break;
 				}
 
-				else
-				{
-					buffer[valread] = '\0';
-					int fp = open(buffer, O_RDONLY);
-					int len;
-					size_t newLen;
-					char length[10];
-					int old_offset;
+				if (fstat(fp, &file_stat) < 0) {
+					fprintf(stderr, "Error fstat --> %s", strerror(errno));
+					exit(EXIT_FAILURE);
+				}
 
-					if (fp==-1) {
-						fputs ("File error",stderr); 
-						break;
-					}
-
-					if (fstat(fp, &file_stat) < 0) {
-						fprintf(stderr, "Error fstat --> %s", strerror(errno));
-						exit(EXIT_FAILURE);
-					}
-					offset = 0;
-					old_offset = 0;
-					remain_data = file_stat.st_size;
-					sprintf(file_size, "%d", file_stat.st_size);
-					printf("The size of the file is: %s\n", file_size);
-					/* Sending file size */
+				old_offset = temp->offset;
+				remain_data = file_stat.st_size - temp->offset;
+				sprintf(file_size, "%d", file_stat.st_size);
+			
+				/* Sending file size */
+				if (temp->offset == 0)
 					len = send(sd, file_size, sizeof(file_size), 0);
-					if (len < 0)
-					{
-						fprintf(stderr, "Error on sending greetings --> %s", strerror(errno));
+				if (len < 0)
+				{
+					fprintf(stderr, "Error on sending greetings --> %s", strerror(errno));
 
-						exit(EXIT_FAILURE);
-					}
-					while (((sent_bytes = sendfile(sd, fp, &offset, MAX_BUFFER_SIZE)) > 0) && (remain_data > 0))
-					{
-						sprintf(length, "%d", sent_bytes);
-						send(sd,  length, MAX_BUFFER_SIZE, 0);
-						recv(sd, file_size, MAX_BUFFER_SIZE, 0);
-						printf("\nRec:%s\n\nSend:%s\n", file_size, length); 
-						if (strcmp(file_size, length) == 0) {
-							fprintf(stdout, "1. Server sent %d bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, offset, remain_data);
-							remain_data -= sent_bytes;
-							fprintf(stdout, "2. Server sent %d bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, offset, remain_data);
-						}
-						else {
-							fprintf(stdout, "Incomplete package. Retrying data transmission");
-							offset = old_offset;
-						}
-						old_offset = offset;
-
-					}
+					exit(EXIT_FAILURE);
 				}
+				if (((sent_bytes = sendfile(sd, fp, &(temp->offset), MAX_BUFFER_SIZE)) > 0) && (remain_data > 0))
+				{
+					sprintf(length, "%d", sent_bytes);
+					send(sd,  length, MAX_BUFFER_SIZE, 0);
+
+
+
+					if ((valread = recv(sd, file_size, MAX_BUFFER_SIZE, 0)) == 0)
+					{
+						getpeername(sd , (struct sockaddr*)&address , \
+								(socklen_t*)&addrlen);
+						printf("Host disconnected , ip %s , port %d \n" ,
+								inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+						delete_node(sd);
+						close( sd );
+						break;
+						client_socket[i] = 0;
+					}	
+
+					printf("\nRec:%s\n\nSend:%s\n", file_size, length); 
+					if (strcmp(file_size, length) == 0) {
+						fprintf(stdout, "1. Server sent %d bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, temp->offset, remain_data-temp->offset);
+						remain_data -= sent_bytes;
+						fprintf(stdout, "2. Server sent %d bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, temp->offset, remain_data-temp->offset);
+					}	
+					else {
+						fprintf(stdout, "Incomplete package. Retrying data transmission");
+						temp->offset = old_offset;
+					}
+					old_offset = temp->offset;
+
+				}
+				close(fp);
+
 			}
 		}
 	}
+
 
 
 	return 0;

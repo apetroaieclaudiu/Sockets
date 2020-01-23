@@ -64,7 +64,7 @@ int main(int argc, char const *argv[])
 	}
 
 	remain_data = file_size;
- 
+
 	while ((remain_data > 0) && ((len = recv(sock, buffer, MAX_BUFFER_SIZE, 0)) > 0))
 	{
 		recv(sock, received_length, MAX_BUFFER_SIZE, 0);
@@ -77,7 +77,8 @@ int main(int argc, char const *argv[])
 		else {
 			fprintf(stdout, "Missing some data, Retrying....\n");
 		}
-		send(sock, aux, MAX_BUFFER_SIZE, 0);
+		send(sock, aux, MAX_BUFFER_SIZE, 0);		
+
 	}
 	fclose(received_file);
 

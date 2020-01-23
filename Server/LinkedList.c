@@ -6,7 +6,7 @@ Node* head = NULL;
 pthread_mutex_t lock_head = PTHREAD_MUTEX_INITIALIZER;   
 pthread_mutex_t lock_next = PTHREAD_MUTEX_INITIALIZER;   
 
-void add_node(char file_req[], int desc_id) {
+Node* add_node(char file_req[], int desc_id) {
 	Node* new_node  = (Node*) malloc(sizeof(Node));
 	Node* last;
 
@@ -16,17 +16,19 @@ void add_node(char file_req[], int desc_id) {
 	new_node->next = NULL;
 	if (head == NULL) {
 		head = new_node;
-		return ;
+		return head;
 	}
 	last = head;
 	while (last->next != NULL) {
 		if (last->descriptor_id == desc_id) {
-			return ;
+			return last;
 		}
 		last = last->next;
 	}
 
 	last->next = new_node;
+	return new_node;
+
 }
 
 
@@ -34,7 +36,7 @@ void delete_node(int value) {
 	Node* temp = head;
 	Node* prev;
 
-	if (temp != NULL && temp->descriptor_id != value) {
+	while (temp != NULL && temp->descriptor_id != value) {
 		prev = temp;
 		temp = temp->next;
 	}
@@ -67,4 +69,16 @@ void flush_list() {
 	}
 
 	head = NULL;
+}
+
+Node* getNode(int desc_id) {
+	Node *temp = head;
+	
+	while (temp != NULL) {
+		if (temp->descriptor_id == desc_id)
+			return temp;
+		temp = temp->next;
+	}
+
+	return NULL;
 }
