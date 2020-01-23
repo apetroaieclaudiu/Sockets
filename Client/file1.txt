@@ -1,0 +1,84 @@
+Welcome aboard! Connection succesfull. 
+¸àÈ^ and M- notation, except for LFD and TAB
+
+       --help display this help and exit
+
+       --version
+              output version information and exit
+
+EXAMPLES
+       cat f - g
+              Output f's contents, then standard input, then g's contents.
+
+       cat    Copy standard input to standard output.
+
+AUTHOR
+       Written by Torbjorn Granlund and Richard M. Stallman.
+
+REPORTING BUGS
+       GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
+       Report cat translation bugs to <http://translationproject.org/team/>
+
+COPYRIGHT
+       Copyright Â© 2017 Free Software Foundation, Inc.  License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+       This is free software: you are free to change and redistribute it.  There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+       tac(1)
+
+       Full documentation at: <http://www.gnu.org/software/coreutils/cat>
+       or available locally via: info '(coreutils) cat invocation'
+
+GNU coreutils 8.28            à(jÓÿ     ^ and M- notation, except for LFD and TAB
+
+       --help display this help and exit
+
+       --version
+              output version information and exit
+
+EXAMPLES
+       cat f - g
+              Output f's contents, then standard input, then g's contents.
+
+       cat    Copy standard input to standard output.
+
+AUTHOR
+       Written by Torbjorn Granlund and Richard M. Stallman.
+
+REPORTING BUGS
+       GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
+       Report cat translation bugs to <http://translationproject.org/team/>
+
+COPYRIGHT
+       Copyright Â© 2017 Free Software Foundation, Inc.  License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+       This is free software: you are free to change and redistribute it.  There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+       tac(1)
+
+       Full documentation at: <http://www.gnu.org/software/coreutils/cat>
+       or available locally via: info '(coreutils) cat invocation'
+
+GNU coreutils 8.28            à(jÓÿ                                                                           January 2018                                                                                                       CAT(1)
+  Output f's contents, then standard input, then g's contents.
+
+       cat    Copy standard input to standard output.
+
+AUTHOR
+       Written by Torbjorn Granlund and Richard M. Stallman.
+
+REPORTING BUGS
+       GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
+       Report cat translation bugs to <http://translationproject.org/team/>
+
+COPYRIGHT
+       Copyright Â© 2017 Free Software Foundation, Inc.  License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+       This is free software: you are free to change and redistribute it.  There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+       tac(1)
+
+       Full documentation at: <http://www.gnu.org/software/coreutils/cat>
+       or available locally via: info '(coreutils) cat invocation'
+
+GNU coreutils 8.28            à(jÓÿ
