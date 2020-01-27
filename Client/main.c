@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <errno.h>
+#include "RequestHandler.h"
 
 #define PORT 8080 
 #define MAX_BUFFER_SIZE 1024
@@ -17,10 +18,11 @@ int main(int argc, char const *argv[])
 	char buffer[1024] = {0};
 	FILE *received_file;
 	ssize_t len;
-	char received_length[MAX_BUFFER_SIZE];
+	char receivedFrame[MAX_BUFFER_SIZE];
 	int file_size;
-	int remain_data = 0;
+	int remain_data = 0, offset = 0;
 	char aux[256];
+	char filename[MAX_BUFFER_SIZE];
 
 	if (argc != 2) {
 		printf("\nInvalid number of arguments\n");
@@ -49,10 +51,9 @@ int main(int argc, char const *argv[])
 		printf("\nConnection Failed \n"); 
 		return -1; 
 	} 
-	send(sock, argv[1], strlen(argv[1]), 0);
-	recv(sock, buffer, MAX_BUFFER_SIZE, 0);
-	printf("\nServer message: %s\n", buffer);
-	file_size = atoi(buffer);
+	sprintf(filename, "requestedFile%d", getpid());
+	sendFileSizeRequest(&sock, argv[1]);
+	file_size = getFileSize(&sock);
 	fprintf(stdout, "\nFile size : %d\n", file_size);
 
 	received_file = fopen("requestedFile", "w");
@@ -64,20 +65,23 @@ int main(int argc, char const *argv[])
 	}
 
 	remain_data = file_size;
- 
-	while ((remain_data > 0) && ((len = recv(sock, buffer, MAX_BUFFER_SIZE, 0)) > 0))
-	{
-		recv(sock, received_length, MAX_BUFFER_SIZE, 0);
-		sprintf(aux, "%d", len);
-		if (strcmp(aux, received_length) == 0) {
-			fwrite(buffer, sizeof(char), len, received_file);
-			remain_data -= len;
-			fprintf(stdout, "Receive %ld bytes and we hope :- %d bytes\n", len, remain_data);
+ 	offset = 0;
+	while (remain_data > 0)
+	{	
+		int expectedSize;
+		int flag;
+		if (remain_data - offset > MAX_BUFFER_SIZE)
+			expectedSize = MAX_BUFFER_SIZE;
+		else
+			expectedSize = remain_data - offset;
+
+		sendFrameRequest(&sock, argv[1], offset);
+		flag = getFrame(&sock, receivedFrame, expectedSize);
+		if (flag) {
+			fwrite(receivedFrame, sizeof(char), strlen(receivedFrame), received_file);
+			remain_data -= expectedSize;
+			offset += expectedSize;
 		}
-		else {
-			fprintf(stdout, "Missing some data, Retrying....\n");
-		}
-		send(sock, aux, MAX_BUFFER_SIZE, 0);
 	}
 	fclose(received_file);
 

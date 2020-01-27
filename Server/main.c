@@ -12,7 +12,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include "LinkedList.h"
+#include "RequestHandler.h"
 
 #define MAX_BUFFER_SIZE 1024
 #define TRUE   1
@@ -143,52 +143,7 @@ int main(int argc , char *argv[])
 				else
 				{
 					buffer[valread] = '\0';
-					int fp = open(buffer, O_RDONLY);
-					int len;
-					size_t newLen;
-					char length[10];
-					int old_offset;
-
-					if (fp==-1) {
-						fputs ("File error",stderr); 
-						break;
-					}
-
-					if (fstat(fp, &file_stat) < 0) {
-						fprintf(stderr, "Error fstat --> %s", strerror(errno));
-						exit(EXIT_FAILURE);
-					}
-					offset = 0;
-					old_offset = 0;
-					remain_data = file_stat.st_size;
-					sprintf(file_size, "%d", file_stat.st_size);
-					printf("The size of the file is: %s\n", file_size);
-					/* Sending file size */
-					len = send(sd, file_size, sizeof(file_size), 0);
-					if (len < 0)
-					{
-						fprintf(stderr, "Error on sending greetings --> %s", strerror(errno));
-
-						exit(EXIT_FAILURE);
-					}
-					while (((sent_bytes = sendfile(sd, fp, &offset, MAX_BUFFER_SIZE)) > 0) && (remain_data > 0))
-					{
-						sprintf(length, "%d", sent_bytes);
-						send(sd,  length, MAX_BUFFER_SIZE, 0);
-						recv(sd, file_size, MAX_BUFFER_SIZE, 0);
-						printf("\nRec:%s\n\nSend:%s\n", file_size, length); 
-						if (strcmp(file_size, length) == 0) {
-							fprintf(stdout, "1. Server sent %d bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, offset, remain_data);
-							remain_data -= sent_bytes;
-							fprintf(stdout, "2. Server sent %d bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, offset, remain_data);
-						}
-						else {
-							fprintf(stdout, "Incomplete package. Retrying data transmission");
-							offset = old_offset;
-						}
-						old_offset = offset;
-
-					}
+					manageRequest(&sd, buffer);
 				}
 			}
 		}
