@@ -14,15 +14,12 @@
 
 int main(int argc, char const *argv[]) 
 { 
-	int sock = 0, valread; 
+	int sock = 0; 
 	struct sockaddr_in serv_addr; 
-	char buffer[1024] = {0};
 	FILE *received_file;
-	ssize_t len;
 	char receivedFrame[MAX_BUFFER_SIZE] = {0};
 	int file_size;
 	int remain_data = 0, offset = 0;
-	char aux[256];
 	char filename[MAX_BUFFER_SIZE];
 	struct pollfd fds[1];
 
@@ -89,7 +86,6 @@ int main(int argc, char const *argv[])
 				dataOK = getFrame(sock, receivedFrame, expectedSize, &length);
 				if (dataOK) {
 					receivedFrame[length] = '\0';
-					printf("\n========%d===========\n", strlen(receivedFrame));
 					fwrite(receivedFrame, sizeof(char), strlen(receivedFrame), received_file);
 					remain_data -= expectedSize;
 					offset += expectedSize;

@@ -27,7 +27,6 @@ int	verifyMessageSize(int requestedSize, int receivedSize) {
 }
 
 void	manageRequest(int sd, char *message) {
-	int 	messageSize;
 	char	mess[MAX_BUFFER_SIZE];
 	int 	offset;
 	char 	*auxStr, *filename;
@@ -66,9 +65,7 @@ void	sendFrame(int sd, char *filename,int offset) {
 	int		offst = offset;	
 	char		auxStr[MAX_BUFFER_SIZE];
 	int 		fp;
-	char 		fileSize[MAX_BUFFER_SIZE];
 	struct stat 	file_stat;
-	int		length;
 	int error = 0;
 	socklen_t len = sizeof (error);
 	int retval = getsockopt (sd, SOL_SOCKET, SO_ERROR, &error, &len);
@@ -98,7 +95,7 @@ void	sendFrame(int sd, char *filename,int offset) {
 		exit(EXIT_FAILURE);
 	}
 
-	length = sendfile(sd, fp, &offst, MAX_BUFFER_SIZE);
+	sendfile(sd, fp, &offst, MAX_BUFFER_SIZE);
 	close(fp);
 }
 
@@ -139,7 +136,7 @@ void 	sendFileSize(int sd, char *filename) {
 		exit(EXIT_FAILURE);
 	}
 
-	sprintf(fileSize, "%d", file_stat.st_size);
+	sprintf(fileSize, "%ld", file_stat.st_size);
 	send(sd, fileSize, MAX_BUFFER_SIZE, 0);
 	close(fp);
 }
