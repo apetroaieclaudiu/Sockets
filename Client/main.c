@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <poll.h>
 #include "RequestHandler.h"
 
 #define PORT 8080 
@@ -18,11 +19,12 @@ int main(int argc, char const *argv[])
 	char buffer[1024] = {0};
 	FILE *received_file;
 	ssize_t len;
-	char receivedFrame[MAX_BUFFER_SIZE];
+	char receivedFrame[MAX_BUFFER_SIZE] = {0};
 	int file_size;
 	int remain_data = 0, offset = 0;
 	char aux[256];
 	char filename[MAX_BUFFER_SIZE];
+	struct pollfd fds[1];
 
 	if (argc != 2) {
 		printf("\nInvalid number of arguments\n");
@@ -52,11 +54,11 @@ int main(int argc, char const *argv[])
 		return -1; 
 	} 
 	sprintf(filename, "requestedFile%d", getpid());
-	sendFileSizeRequest(&sock, argv[1]);
-	file_size = getFileSize(&sock);
+	sendFileSizeRequest(sock, argv[1]);
+	file_size = getFileSize(sock);
 	fprintf(stdout, "\nFile size : %d\n", file_size);
 
-	received_file = fopen("requestedFile", "w");
+	received_file = fopen(filename, "w");
 	if (received_file == NULL)
 	{
 		fprintf(stderr, "Failed to open file foo --> %s\n", strerror(errno));
@@ -64,27 +66,41 @@ int main(int argc, char const *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	fds[0].fd = sock;
+	fds[0].events = POLLIN | POLLPRI;
+
 	remain_data = file_size;
- 	offset = 0;
+	offset = 0;
+
+	sendFrameRequest(sock, argv[1], offset);
 	while (remain_data > 0)
 	{	
 		int expectedSize;
-		int flag;
-		if (remain_data - offset > MAX_BUFFER_SIZE)
+		int dataOK;
+		int rv;
+		int length;
+		if (file_size - offset >= MAX_BUFFER_SIZE)
 			expectedSize = MAX_BUFFER_SIZE;
 		else
-			expectedSize = remain_data - offset;
+			expectedSize = file_size - offset;
 
-		sendFrameRequest(&sock, argv[1], offset);
-		flag = getFrame(&sock, receivedFrame, expectedSize);
-		if (flag) {
-			fwrite(receivedFrame, sizeof(char), strlen(receivedFrame), received_file);
-			remain_data -= expectedSize;
-			offset += expectedSize;
+		if ((rv = poll(fds, 1, 10000) > 0)) {
+			if( fds[0].revents & POLLIN) {
+				dataOK = getFrame(sock, receivedFrame, expectedSize, &length);
+				if (dataOK) {
+					receivedFrame[length] = '\0';
+					printf("\n========%d===========\n", strlen(receivedFrame));
+					fwrite(receivedFrame, sizeof(char), strlen(receivedFrame), received_file);
+					remain_data -= expectedSize;
+					offset += expectedSize;
+				}
+			}
 		}
-	}
-	fclose(received_file);
 
+		sendFrameRequest(sock, argv[1], offset);
+	}
+
+	fclose(received_file);
 	close(sock);
 
 	return 0; 

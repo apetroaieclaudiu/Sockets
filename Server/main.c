@@ -76,7 +76,6 @@ int main(int argc , char *argv[])
 	while(TRUE)
 	{
 		FD_ZERO(&readfds);
-
 		FD_SET(master_socket, &readfds);
 		max_sd = master_socket;
 
@@ -91,7 +90,7 @@ int main(int argc , char *argv[])
 				max_sd = sd;
 		}
 
-		activity = select( max_sd + 1 , &readfds , NULL , NULL , NULL);
+		activity = select( max_sd + 1 , &readfds , NULL, NULL , NULL);
 
 		if ((activity < 0) && (errno!=EINTR))
 		{
@@ -139,16 +138,14 @@ int main(int argc , char *argv[])
 					close( sd );
 					client_socket[i] = 0;
 				}
-
 				else
 				{
 					buffer[valread] = '\0';
-					manageRequest(&sd, buffer);
+					manageRequest(sd, buffer);
 				}
 			}
 		}
 	}
-
 
 	return 0;
 }

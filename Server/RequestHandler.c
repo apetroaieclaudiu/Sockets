@@ -26,7 +26,7 @@ int	verifyMessageSize(int requestedSize, int receivedSize) {
 	return 1;
 }
 
-void	manageRequest(int *sd, char *message) {
+void	manageRequest(int sd, char *message) {
 	int 	messageSize;
 	char	mess[MAX_BUFFER_SIZE];
 	int 	offset;
@@ -45,35 +45,48 @@ void	manageRequest(int *sd, char *message) {
 		strncpy(filename, filename, strlen(filename));
 		auxStr = strtok(NULL, "");
 		offset = atoi(auxStr);
-		printf("\n=====%d=====\n", offset);
 		remove_spaces(filename);
 		sendFrame(sd, filename, offset);
 	}
 }
 
-void	sendFrameRequest(int *sd, char *filename, int offset) {
+void	sendFrameRequest(int sd, char *filename, int offset) {
 	char requestMessage[MAX_BUFFER_SIZE];
 	char offsetStr[MAX_BUFFER_SIZE];
-	
+
 	sprintf(offsetStr, "%d", offset);
 	strcpy(requestMessage, filename);
 	strcat(requestMessage, " & ");
 	strcat(requestMessage, offsetStr);
 
-	send(*sd, requestMessage, MAX_BUFFER_SIZE, 0);
+	send(sd, requestMessage, MAX_BUFFER_SIZE, 0);
 }
 
-void	sendFrame(int *sd, char *filename,int offset) {
+void	sendFrame(int sd, char *filename,int offset) {
 	int		offst = offset;	
 	char		auxStr[MAX_BUFFER_SIZE];
 	int 		fp;
 	char 		fileSize[MAX_BUFFER_SIZE];
 	struct stat 	file_stat;
+	int		length;
+	int error = 0;
+	socklen_t len = sizeof (error);
+	int retval = getsockopt (sd, SOL_SOCKET, SO_ERROR, &error, &len);
+
+	if (retval != 0) {
+		/* there was a problem getting the error code */
+		fprintf(stderr, "error getting socket error code: %s\n", strerror(retval));
+		return;
+	}
+
+	if (error != 0) {
+		/* socket has a non zero error status */
+		fprintf(stderr, "socket error: %s\n", strerror(error));
+	}
 
 	strcpy(auxStr, filename);
 	auxStr[strlen(auxStr) - 1] = 0;
 	fp= open(auxStr, O_RDONLY);
-	printf("\n%s : %d \n", auxStr, strlen(auxStr));
 
 	if (fp == -1) {
 		fputs("File error", stderr);
@@ -84,33 +97,29 @@ void	sendFrame(int *sd, char *filename,int offset) {
 		fprintf(stderr, "error on sending greetings --> %s", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
-	printf("\nPana aici merge bine\n");	
-	
-	sendfile(*sd, fp, &offst, MAX_BUFFER_SIZE);
 
-	printf("\nSend facut\n");	
+	length = sendfile(sd, fp, &offst, MAX_BUFFER_SIZE);
 	close(fp);
 }
 
-int 	getFileSize(int *sd) {
+int 	getFileSize(int sd) {
 	char fileSize[MAX_BUFFER_SIZE];
 	int size;
 
-	recv(*sd, fileSize, MAX_BUFFER_SIZE, 0);
+	recv(sd, fileSize, MAX_BUFFER_SIZE, 0);
 	size  = atoi(fileSize);
 
 	return size;
 }
 
-void	sendFileSizeRequest(int *sd, char *filename) {
+void	sendFileSizeRequest(int sd, char *filename) {
 	char requestMessage[MAX_BUFFER_SIZE];
 	strcpy(requestMessage, filename);
 	strcat(requestMessage, " & Size");
-
-	send(*sd, requestMessage, MAX_BUFFER_SIZE, 0);
+	send(sd, requestMessage, MAX_BUFFER_SIZE, 0);
 }
 
-void 	sendFileSize(int *sd, char *filename) {
+void 	sendFileSize(int sd, char *filename) {
 	char		auxStr[MAX_BUFFER_SIZE];
 	int 		fp;
 	char 		fileSize[MAX_BUFFER_SIZE];
@@ -119,7 +128,6 @@ void 	sendFileSize(int *sd, char *filename) {
 	strcpy(auxStr, filename);
 	auxStr[strlen(auxStr) - 1] = 0;
 	fp= open(auxStr, O_RDONLY);
-	printf("\n%s : %d \n", auxStr, strlen(auxStr));
 
 	if (fp == -1) {
 		fputs("File error", stderr);
@@ -132,16 +140,14 @@ void 	sendFileSize(int *sd, char *filename) {
 	}
 
 	sprintf(fileSize, "%d", file_stat.st_size);
-	send(*sd, fileSize, MAX_BUFFER_SIZE, 0);
-
+	send(sd, fileSize, MAX_BUFFER_SIZE, 0);
 	close(fp);
 }
 
-int	getFrame(int *sd, char *message, int expectedSize) {
-	int len;
-	len = recv(*sd, message, MAX_BUFFER_SIZE, 0);
+int	getFrame(int sd, char *message, int expectedSize, int *length) {
+	*length = recv(sd, message, MAX_BUFFER_SIZE, 0);
 
-	if (verifyMessageSize(expectedSize, len))
+	if (verifyMessageSize(expectedSize, *length))
 		return 1;
 	return 0;
 }
